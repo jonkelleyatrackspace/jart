@@ -129,7 +129,7 @@ def send_artifact():
     if remotefilemd5 != testfilemd5:
         execution_report("Remote md5sum on artifact server did not match local!",1)
 
-    execution_report("File transfer to <hostname> success!",0)
-
-for server in return_artifact_servers():
+servers = return_artifact_servers()
+for server in servers:
     execute(send_artifact, hosts=["root@"+server])
+execution_report("File transfer to "+str(servers)+" success!",0)

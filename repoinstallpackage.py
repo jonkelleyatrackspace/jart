@@ -5,10 +5,10 @@
 # param: artifact  - The RPM artifact you wish to retrieve [myfile.rpm]. (REQUIRED)
 # param: release - What Redhat release to put this file in [5,6,7] (REQUIRED)
 # param: arch - The architecture you wish to put this file in [x86_64,noarch,x86] (REQUIRED)
-# param: environment - What environment do you want to put this in [signup,atomhopper,shared] (REQUIRED)
-# param: datacenter - The datacenter to contact [ord,dfw,all] (REQUIRED)
-# param: tier - The tier of service to contact [dev,staging,test,prod,stable] (REQUIRED)
-# param: signed - If the package should go in the signed or unsigned repository
+# param: environment - Input validate check they know what producty they mean to update.
+# param: datacenter - Input validate check what datacenter they want to use.
+# param: tier - Input validate check what tier they are using.
+# param: signed - Determine if strict sign checking should be used for the package. Default assume TRUE.
 # http_method: post
 # lock: False
 # -- jojo -- 
@@ -70,7 +70,7 @@ def display(err, text):
     print "************  >>" + err + "<< " + text
 
 def return_repository_settings():
-    """ Retrieves the artifact repository settings from YaML """
+    """ Retrieves the artifact repository settings from YaML configuration. """
     stream = open(configfile, 'r')
     try:
         config = yaml.load(stream)['repo_server_settings']
@@ -107,7 +107,7 @@ halt_if_value_empty(var_tier,'tier')
 """ Checks user to make sure they know what they are talking to """
 if var_environment != settings['environment']:
     execution_report("WRONG ENVIRONMENT. You provided: "+var_environment+" This is:" + settings['environment'],99)
-if var_datacenter != settigns['datacenter']:
+if var_datacenter != settings['datacenter']:
     execution_report("WRONG DATACENTER. You provided: "+var_datacenter+" This is:" + settings['datacenter'],99)
 if var_tier != settings['tier']:
     execution_report("WRONG TIER. You provided: "+var_tier+" This is:" + settings['tier'],99)

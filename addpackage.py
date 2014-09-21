@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+#  Add a package curl -XPOST -H "Content-Type: application/json" -d '{"signed" : "False", "file": "/epel-release-5-4.noarch.rpm"}'  'http://localhost:9090/scripts/example' | python -m json.tool
+
+# Reload jojo server    curl -XPOST  'http://localhost:9090/reload' -v
 # -- jojo --
 # description: Upload a file with fabric
 # param: file  - File you wish to upload

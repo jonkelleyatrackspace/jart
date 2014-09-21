@@ -69,26 +69,12 @@ def display(err, text):
     """ Prints some informational messages that are preformatted."""
     print "************  >>" + err + "<< " + text
 
-# Get parameters.
-var_file        = bash_real_escape_string(os.environ.get('ARTIFACT'))
-var_environment = bash_real_escape_string(os.environ.get('ENVIRONMENT'))
-var_datacenter  = bash_real_escape_string(os.environ.get('DATACENTER'))
-var_tier        = bash_real_escape_string(os.environ.get('TIER'))
-
-var_signed      = bash_real_escape_string(os.environ.get('SIGNED'))
-# Don't let script continue without these parameters.
-halt_if_value_empty(var_file,'artifact')
-halt_if_value_empty(var_environment,'environment')
-halt_if_value_empty(var_datacenter,'datacenter')
-halt_if_value_empty(var_tier,'tier')
-
-
 def return_repository_settings():
-    """ Retrieves the artifact settings """
+    """ Retrieves the artifact repository settings from YaML """
     stream = open(configfile, 'r')
     try:
         config = yaml.load(stream)['repo_server_settings']
-        add_yaml_key_if_not_exists = config['product']
+        add_yaml_key_if_not_exists = config['environment']
         add_yaml_key_if_not_exists = config['tier']
         add_yaml_key_if_not_exists = config['datacenter']
         add_yaml_key_if_not_exists = config['artifact_server']
@@ -100,55 +86,42 @@ def return_repository_settings():
         sys.exit(253)
     stream.close()
 
-def send_artifact():
-    """ Sends an artifact out to the yum server of choice. """
+settings = return_repository_settings()
+
+# Get parameters.
+var_file        = bash_real_escape_string(os.environ.get('ARTIFACT'))
+var_environment = bash_real_escape_string(os.environ.get('ENVIRONMENT'))
+var_datacenter  = bash_real_escape_string(os.environ.get('DATACENTER'))
+var_tier        = bash_real_escape_string(os.environ.get('TIER'))
+
+var_signed      = bash_real_escape_string(os.environ.get('SIGNED'))
+if settings['only_allow_signed_packages'] == "True": var_signed = "True" # Force package sign override.
+
+# Don't let script continue without these parameters.
+halt_if_value_empty(var_file,'artifact')
+halt_if_value_empty(var_environment,'environment')
+halt_if_value_empty(var_datacenter,'datacenter')
+halt_if_value_empty(var_tier,'tier')
+
+
+""" Checks user to make sure they know what they are talking to """
+if var_environment != settings['environment']:
+    execution_report("WRONG ENVIRONMENT. You provided: "+var_environment+" This is:" + settings['environment'],99)
+if var_datacenter != settigns['datacenter']:
+    execution_report("WRONG DATACENTER. You provided: "+var_datacenter+" This is:" + settings['datacenter'],99)
+if var_tier != settings['tier']:
+    execution_report("WRONG TIER. You provided: "+var_tier+" This is:" + settings['tier'],99)
+
+
+def get_artifact():
+    """ Retrieves an artifact from the artifact server. """
     target_hostname = run('hostname -f')
     display(err.INFO,"------------------------------------------")
-    display(err.INFO,"STARTING artifact transfer to host " + target_hostname + " ("+env.host +")")
+    display(err.INFO,"STARTING artifact download from host " + target_hostname + " ("+env.host +")")
 
-    # Use the `file` command to determine filetype of the file we're handling.
-    display(err.INFO,"Attempting to validate if the LOCAL file is a valid rpm.")
 
-    testfiletype=local(bin_file+' '+var_file,capture=True)
 
-    # Enforce only RPM's be transmitted.
-    if not "RPM" in testfiletype:
-        execution_report("Your artifact is not an RPM.",252)
 
-    # Enforce modern RPM format.
-    if not "v3.0" in testfiletype:
-        display(err.ERROR,"Your artifact is not a v3.0 RPM.",251)
-
-    # Fail if pgp enforce is not skipped by parameter.
-    if "pgp" not in testfiletype:
-        if var_signed != "False":
-            execution_report("We enforce PGP signed RPMs. Your artifact is not signed! To bypass supply signed : False as a JSON POST parameter.",250)
-        else:
-            display(err.WARN,"RPM artifact is missing a PGP signature.")
-
-    # Make sure md5sum inside package is valid without gpg checking.
-    rpmchecksig=local(bin_rpm+' --nosignature --checksig '+var_file,capture=True)
-    if not "md5 OK" in rpmchecksig:
-        execution_report("RPM artifact metadata md5sum FAIL!",249)
-
-    # UPLOAD
-    # To the artifact server
-    display(err.INFO,"Transmitting artifact to artifact server...")
-    put(var_file,'/srv/incoming/')
-
-    # MD5SUM
-    # Validate remote file matches local file.
-    testfilemd5=local(bin_md5sum+" "+var_file,capture=True).split(' ')[1]
-    remotefilemd5=run(bin_md5sum+' /srv/incoming/'+os.path.basename(var_file)).split(' ')[1]
-    if remotefilemd5 != testfilemd5:
-        execution_report("Remote md5sum on artifact server did not match local!",1)
-
-    run('echo `hostname -f` received the artifact as scheduled.')
-    display(err.INFO," FINISHED artifact transfer to host  " + target_hostname + " ("+env.host +")")
-    display(err.INFO,"------------------------------------------")
-
-print return_repository_settings()
-#for server in servers:
-#    execute(send_artifact, hosts=["root@"+server])
+execute(get_artifact, hosts=["root@"+settings['artifact_server'] ])
 #execution_report("File transfer to "+str(servers)+" success!",0)
 

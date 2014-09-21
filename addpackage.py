@@ -103,57 +103,48 @@ def return_artifact_servers():
         sys.exit(253)
     stream.close()
 
-
 def send_artifact():
-    """ Sends a file to the yum server of choice. """
+    """ Sends an artifact out to the yum server of choice. """
     display(err.DEBUG,"Topfile.")
 
     # Use the `file` command to determine filetype of the file we're handling.
     display(err.INFO,"Attempting to validate if the LOCAL file is a valid rpm.")
 
     testfiletype=local('file '+var_file,capture=True)
-    testfilemd5=local('md5sum '+var_file,capture=True)
 
-    if "RPM" in testfiletype:
-        display(err.INFO,"FILE is of type RPM...")
-    else:
-        execution_report("ERROR:: Your package is not an RPM",252)
+    # Enforce only RPM's be transmitted.
+    if not "RPM" in testfiletype:
+        execution_report("Your artifact is not an RPM.",252)
 
-    if "v3.0" in testfiletype:
-        display(err.INFO,"FILE is of type RPM v3.0...")
-    else:
-        display(err.ERROR,"Your package is not a v3.0 RPM",251)
+    # Enforce modern RPM format.
+    if not "v3.0" in testfiletype:
+        display(err.ERROR,"Your artifact is not a v3.0 RPM.",251)
 
+    # Fail if pgp enforce is not skipped by parameter.
     if "pgp" not in testfiletype:
         if var_signed != "False":
-            display(err.ERROR," Your package has no PGP signature.")
-            execution_report("We enforce PGP signed RPMs. Your RPM is not signed!",250)
+            execution_report("We enforce PGP signed RPMs. Your artifact is not signed! To bypass supply signed : False as a JSON POST parameter.",250)
         else:
-            display(err.WARN,"Your package has no PGP signature.")
+            display(err.WARN,"RPM artifact is missing a PGP signature.")
 
-    # Now make sure the RPM's md5sum matches inside of the .rpm file using `rpm` command.
-    display(err.INFO,"Attempting to validate RPM files md5sum...")
+    # Make sure md5sum inside package is valid without gpg checking.
     rpmchecksig=local('/bin/rpm --nosignature --checksig '+var_file,capture=True)
-    print rpmchecksig
-    if "md5 OK" in rpmchecksig:
-        display(err.INFO,"FILE md5sum OK...")
-    else:
-        execution_report("File reference fails RPM md5sum check.",249)
+    if not "md5 OK" in rpmchecksig:
+        execution_report("RPM artifact metadata md5sum FAIL!",249)
 
-    # Upload the file
-    display(err.INFO,"Attempting transmit of file to file server.")
+    # UPLOAD
+    # To the artifact server
+    display(err.INFO,"Transmitting artifact to artifact server...")
     put(var_file,'/srv/repo/')
 
-    # Compare local md5 with remote md5 for successful transfer.
-    display(err.INFO,"Checking remote file transfer")
-    remotefilemd5=run('md5sum '+'/srv/scripts/'+os.path.basename(var_file),capture=True)
-    if remotefilemd5 == testfilemd5:
-        execution_report("File transfer to <hostname> success!",0)
-    else:
-        execution_report("File transfer to <hostname> failed!",1)
+    # MD5SUM
+    # Validate remote file matches local file.
+    testfilemd5=local('md5sum '+var_file,capture=True).split(' ')[1]
+    remotefilemd5=run('md5sum '+'/srv/repo/'+os.path.basename(var_file)).split(' ')[1]
+    if remotefilemd5 != testfilemd5:
+        execution_report("Remote md5sum on artifact server did not match local!",1)
 
-print "repo_servers" + str(return_repo_servers())
-print "artifact_servers" + str(return_artifact_servers())
+    execution_report("File transfer to <hostname> success!",0)
 
 for server in return_artifact_servers():
     execute(send_artifact, hosts=["root@"+server])

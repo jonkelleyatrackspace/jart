@@ -65,6 +65,7 @@ def display(err, text):
 
 # Get parameters.
 var_file        = bash_real_escape_string(os.environ.get('ARTIFACT'))
+var_file = os.normpath('/' + var_file).lstrip('/')
 var_environment = bash_real_escape_string(os.environ.get('ENVIRONMENT'))
 var_datacenter  = bash_real_escape_string(os.environ.get('DATACENTER'))
 var_tier        = bash_real_escape_string(os.environ.get('TIER'))

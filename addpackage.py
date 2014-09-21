@@ -86,8 +86,7 @@ def return_repo_servers():
             sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
             traceback.print_exc(file=sys.stderr)
             sys.exit(253)
-        finally:
-            stream.close()
+    stream.close()
 
 def return_artifact_servers():
     stream = open(configfile, 'r')
@@ -99,8 +98,7 @@ def return_artifact_servers():
             sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
             traceback.print_exc(file=sys.stderr)
             sys.exit(253)
-        finally:
-            stream.close()
+    stream.close()
 
 def send_artifact():
     """ Sends a file to the yum server of choice. """

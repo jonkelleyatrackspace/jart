@@ -87,11 +87,12 @@ def return_repository_settings():
     """ Retrieves the artifact settings """
     stream = open(configfile, 'r')
     try:
-        yaml.load(stream)['repo_server_settings']['product']
-        yaml.load(stream)['repo_server_settings']['tier']
-        yaml.load(stream)['repo_server_settings']['datacenter']
-        yaml.load(stream)['repo_server_settings']['artifact_server']
-        return yaml.load(stream)['repo_server_settings']
+        config = yaml.load(stream)['repo_server_settings']
+        add_yaml_key_if_not_exists = config['product']
+        add_yaml_key_if_not_exists = config['tier']
+        add_yaml_key_if_not_exists = config['datacenter']
+        add_yaml_key_if_not_exists = config['artifact_server']
+        return config
     except KeyError:
         sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing repo_server_settings key value, an exception will reveal soon.\n')
         sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')

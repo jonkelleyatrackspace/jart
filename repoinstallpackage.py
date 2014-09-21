@@ -20,7 +20,7 @@
 # /srv/repo/unsigned/7/noarch/shared/
 
 import sys, os, yaml, traceback
-from fabric.api import env, local, put, run, settings
+from fabric.api import env, local, get, run, settings
 from fabric.tasks import execute
 from pipes import quote as bash_real_escape_string
 
@@ -90,9 +90,11 @@ settings = return_repository_settings()
 
 # Get parameters.
 var_file        = bash_real_escape_string(os.environ.get('ARTIFACT'))
+var_arch        = bash_real_escape_string(os.environ.get('ARCH'))
 var_environment = bash_real_escape_string(os.environ.get('ENVIRONMENT'))
 var_datacenter  = bash_real_escape_string(os.environ.get('DATACENTER'))
 var_tier        = bash_real_escape_string(os.environ.get('TIER'))
+var_release        = bash_real_escape_string(os.environ.get('RELEASE'))
 
 var_signed      = bash_real_escape_string(os.environ.get('SIGNED'))
 if settings['only_allow_signed_packages'] == "True": var_signed = "True" # Force package sign override.
@@ -102,7 +104,9 @@ halt_if_value_empty(var_file,'artifact')
 halt_if_value_empty(var_environment,'environment')
 halt_if_value_empty(var_datacenter,'datacenter')
 halt_if_value_empty(var_tier,'tier')
-
+halt_if_value_empty(var_file,'arch')
+halt_if_value_empty(var_file,'release')
+secure_designator = "unsigned"
 
 """ Checks user to make sure they know what they are talking to """
 if var_environment != settings['environment']:
@@ -118,7 +122,7 @@ def get_artifact():
     target_hostname = run('hostname -f')
     display(err.INFO,"------------------------------------------")
     display(err.INFO,"STARTING artifact download from host " + target_hostname + " ("+env.host +")")
-
+    get(remote_path='/srv/incoming/'+var_file,local_path='/srv/repo/'+secure_designator+'/'+var_release+'/'+var_arch+'/'+var_environment+'/'+var_file)
 
 
 

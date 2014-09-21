@@ -112,6 +112,7 @@ def send_artifact():
     display(err.INFO,"Attempting to validate if the LOCAL file is a valid rpm.")
 
     testfiletype=local('file '+var_file,capture=True)
+    testfilemd5=local('md5sum '+var_file,capture=True)
 
     if "RPM" in testfiletype:
         display(err.INFO,"FILE is of type RPM...")
@@ -143,11 +144,13 @@ def send_artifact():
     display(err.INFO,"Attempting transmit of file to file server.")
     put(var_file,'/srv/repo/')
 
-    # List remote directory contents
-    display(err.INFO,"Looking at remote file list.")
-    run('ls -la /srv/repo/')
-
-    execution_report("File transfer to <hostname> success!",0)
+    # Compare local md5 with remote md5 for successful transfer.
+    display(err.INFO,"Checking remote file transfer")
+    remotefilemd5=run('md5sum '+'/srv/scripts/'+os.path.basename(var_file),capture=True)
+    if remotefilemd5 == testfilemd5:
+        execution_report("File transfer to <hostname> success!",0)
+    else:
+        execution_report("File transfer to <hostname> failed!",1)
 
 print "repo_servers" + str(return_repo_servers())
 print "artifact_servers" + str(return_artifact_servers())

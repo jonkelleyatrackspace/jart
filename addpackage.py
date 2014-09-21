@@ -15,6 +15,7 @@
 # -- jojo -- 
 
 verbose=True
+configfile="/srv/scripts/config.yaml"
 
 # curl -XPOST -H "Content-Type: application/json" -d '{"tier":"production","datacenter": "ord", "environment" : "example_netwrk", "signed" : "False", "artifact": "/epel-release-5-4.noarch.rpm"}'  'http://localhost:9090/scripts/example' | python -m json.tool
 # This script in a nutshell
@@ -75,7 +76,7 @@ def locate_server():
                     "cloud_signup":
                         - "https://10.x.x.x"
      """
-    stream = open("/srv/scripts/config.yaml", 'r')
+    stream = open(configfile, 'r')
     if yaml.load(stream)['format_version'] == "1.0":
         """ 1.0 style syntax """
         try:

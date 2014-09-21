@@ -1,29 +1,6 @@
 format_version: 1.0
-artifactservers:
+artifact_servers:
     "example_product":
-        - "104.130.162.166"
-    "product1":
-        - "104.130.162.166"
-    "product2":
-        - "104.130.162.166"
-    "product3":
-        - "104.130.162.166"
-    "product4":
-        - "104.130.162.166"
-reposervers:
-    production:
-        ord:
-            "example_product":
-                - "http://104.130.162.166"
-            "product1":
-                - "http://104.130.162.168"
-    staging:
-        ord:
-            "example_product":
-                - "http://104.130.162.166"
-            "product1":
-                - "http://104.130.162.168"
-    dev:
-        dfw:
-            "example_product":
+        production:
+            ord:
                 - "http://104.130.162.166"

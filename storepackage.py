@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # -- jojo --
-# description: The purpose of this script is to take a local RPM artifact and drop it on to the yum repository of choice.
+# description: The purpose of this script is to send artifact to the artifact storage server.
 # param: artifact  - The RPM artifact you wish to include [myfile.rpm]. (REQUIRED)
 # param: arch - The architecture you wish to put this file in [x86_64,noarch,x86] (REQUIRED)
 # param: release - What Redhat release to put this file in [5,6,7] (REQUIRED)
@@ -76,30 +76,11 @@ halt_if_value_empty(var_environment,'environment')
 halt_if_value_empty(var_datacenter,'datacenter')
 halt_if_value_empty(var_tier,'tier')
 
-def return_repo_servers():
-    """ Locates the server we need to perform operations on. Presents itself as a LIST object.
-
-        It expects the following yaml format:
-        reposervers:
-            production:
-                ord:
-                    "cloud_signup":
-                        - "https://10.x.x.x"
-     """
-    stream = open(configfile, 'r')
-    try:
-        return yaml.load(stream)['reposervers'][var_tier][var_datacenter][var_environment]
-    except KeyError:
-        sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing REPOSERVER key lookup in yaml file. Look for keyerror in STDERR.\n')
-        sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
-        traceback.print_exc(file=sys.stderr)
-        sys.exit(253)
-    stream.close()
 
 def return_artifact_servers():
     stream = open(configfile, 'r')
     try:
-        return yaml.load(stream)['artifactservers'][var_environment]
+        return yaml.load(stream)['artifact_servers'][var_environment][var_tier][var_datacenter]
     except KeyError:
         sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing ARTIFACTSERVER key lookup in yaml file. Look for keyerror in STDERR.\n')
         sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')

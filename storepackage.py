@@ -120,7 +120,7 @@ def send_artifact():
     # UPLOAD
     # To the artifact server
     display(err.INFO,"Transmitting artifact to artifact server...")
-    put(var_file,'/srv/repo/')
+    put(var_file,'/srv/incoming/')
 
     # MD5SUM
     # Validate remote file matches local file.

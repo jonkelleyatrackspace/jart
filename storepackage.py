@@ -14,7 +14,7 @@
 # -- jojo -- 
 
 import sys, os, yaml, traceback
-from fabric.api import local, put, run, settings
+from fabric.api import env, local, put, run, settings
 from fabric.tasks import execute
 from pipes import quote as bash_real_escape_string
 

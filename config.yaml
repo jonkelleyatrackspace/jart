@@ -3,4 +3,4 @@ artifact_servers:
     "example_product":
         production:
             ord:
-                - "http://104.130.162.166"
+                - "104.130.162.166"

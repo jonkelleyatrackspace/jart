@@ -107,45 +107,45 @@ def return_artifact_servers():
 
 def send_artifact():
     """ Sends a file to the yum server of choice. """
-    display(err.DEBUG+"Topfile.")
+    display(err.DEBUG,"Topfile.")
 
     # Use the `file` command to determine filetype of the file we're handling.
-    display(err.info+"Attempting to validate if the LOCAL file is a valid rpm.")
+    display(err.INFO+"Attempting to validate if the LOCAL file is a valid rpm.")
 
     testfiletype=local('file '+var_file,capture=True)
 
     if "RPM" in testfiletype:
-        display(err.INFO+"FILE is of type RPM...")
+        display(err.INFO,"FILE is of type RPM...")
     else:
         execution_report("ERROR:: Your package is not an RPM",252)
 
     if "v3.0" in testfiletype:
-        display(err.INFO+"FILE is of type RPM v3.0...")
+        display(err.INFO,"FILE is of type RPM v3.0...")
     else:
-        display(err.ERROR+"Your package is not a v3.0 RPM",251)
+        display(err.ERROR,"Your package is not a v3.0 RPM",251)
 
     if "pgp" not in testfiletype:
         if var_signed != "False":
-            display(err.ERROR+" Your package has no PGP signature.")
+            display(err.ERROR," Your package has no PGP signature.")
             execution_report("We enforce PGP signed RPMs. Your RPM is not signed!",250)
         else:
-            display(err.WARN+"Your package has no PGP signature.")
+            display(err.WARN,"Your package has no PGP signature.")
 
     # Now make sure the RPM's md5sum matches inside of the .rpm file using `rpm` command.
-    display(err.INFO+"Attempting to validate RPM files md5sum...")
+    display(err.INFO,"Attempting to validate RPM files md5sum...")
     rpmchecksig=local('/bin/rpm --nosignature --checksig '+var_file,capture=True)
     print rpmchecksig
     if "md5 OK" in rpmchecksig:
-        display(err.INFO+"FILE md5sum OK...")
+        display(err.INFO,"FILE md5sum OK...")
     else:
         execution_report("File reference fails RPM md5sum check.",249)
 
     # Upload the file
-    display(err.INFO+"Attempting transmit of file to file server.")
+    display(err.INFO,"Attempting transmit of file to file server.")
     put(var_file,'/srv/repo/')
 
     # List remote directory contents
-    display(err.INFO+"Looking at remote file list.")
+    display(err.INFO,"Looking at remote file list.")
     run('ls -la /srv/repo/')
 
     execution_report("File transfer to <hostname> success!",0)

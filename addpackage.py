@@ -143,8 +143,8 @@ def send_artifact():
 
     # MD5SUM
     # Validate remote file matches local file.
-    testfilemd5=local(bin_md5sum+var_file,capture=True).split(' ')[1]
-    remotefilemd5=run(bin_md5sum+'/srv/repo/'+os.path.basename(var_file)).split(' ')[1]
+    testfilemd5=local(bin_md5sum+" "+var_file,capture=True).split(' ')[1]
+    remotefilemd5=run(bin_md5sum+' /srv/repo/'+os.path.basename(var_file)).split(' ')[1]
     if remotefilemd5 != testfilemd5:
         execution_report("Remote md5sum on artifact server did not match local!",1)
 

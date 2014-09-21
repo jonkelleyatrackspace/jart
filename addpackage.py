@@ -110,7 +110,7 @@ def send_artifact():
     display(err.DEBUG,"Topfile.")
 
     # Use the `file` command to determine filetype of the file we're handling.
-    display(err.INFO+"Attempting to validate if the LOCAL file is a valid rpm.")
+    display(err.INFO,"Attempting to validate if the LOCAL file is a valid rpm.")
 
     testfiletype=local('file '+var_file,capture=True)
 

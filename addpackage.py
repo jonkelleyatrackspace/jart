@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-
 # -- jojo --
 # description: The purpose of this script is to take a local RPM artifact and drop it on to the yum repository of choice.
 # param: artifact  - The RPM artifact you wish to include [myfile.rpm]. (REQUIRED)
@@ -14,18 +13,23 @@
 # lock: False
 # -- jojo -- 
 
+import sys, os, yaml, traceback
+from fabric.api import local, put, run, settings
+from fabric.tasks import execute
+from pipes import quote as bash_real_escape_string
+
 verbose=True
 configfile="/srv/scripts/config.yaml"
+
+# Binary paths
+bin_md5sum="/usr/bin/md5sum"
+bin_rpm="/bin/rpm"
+bin_file="/usr/bin/file"
 
 # curl -XPOST -H "Content-Type: application/json" -d '{"tier":"production","datacenter": "ord", "environment" : "example_netwrk", "signed" : "False", "artifact": "/epel-release-5-4.noarch.rpm"}'  'http://localhost:9090/scripts/example' | python -m json.tool
 # This script in a nutshell
 # 1) Takes a local RPM and validates it is acceptable to upload.
 # 2) Uploads the .rpm to the RECIEVING directory account on yum repo of choice.
-
-import sys, os, yaml, traceback
-from fabric.api import local, put, run, settings
-from fabric.tasks import execute
-from pipes import quote as bash_real_escape_string
 
 class err(object):
     DEBUG = "debug"
@@ -110,7 +114,7 @@ def send_artifact():
     # Use the `file` command to determine filetype of the file we're handling.
     display(err.INFO,"Attempting to validate if the LOCAL file is a valid rpm.")
 
-    testfiletype=local('file '+var_file,capture=True)
+    testfiletype=local(bin_file+' '+var_file,capture=True)
 
     # Enforce only RPM's be transmitted.
     if not "RPM" in testfiletype:
@@ -128,7 +132,7 @@ def send_artifact():
             display(err.WARN,"RPM artifact is missing a PGP signature.")
 
     # Make sure md5sum inside package is valid without gpg checking.
-    rpmchecksig=local('/bin/rpm --nosignature --checksig '+var_file,capture=True)
+    rpmchecksig=local(bin_rpm+' --nosignature --checksig '+var_file,capture=True)
     if not "md5 OK" in rpmchecksig:
         execution_report("RPM artifact metadata md5sum FAIL!",249)
 
@@ -139,8 +143,8 @@ def send_artifact():
 
     # MD5SUM
     # Validate remote file matches local file.
-    testfilemd5=local('md5sum '+var_file,capture=True).split(' ')[1]
-    remotefilemd5=run('md5sum '+'/srv/repo/'+os.path.basename(var_file)).split(' ')[1]
+    testfilemd5=local(bin_md5sum+var_file,capture=True).split(' ')[1]
+    remotefilemd5=run(bin_md5sum+'/srv/repo/'+os.path.basename(var_file)).split(' ')[1]
     if remotefilemd5 != testfilemd5:
         execution_report("Remote md5sum on artifact server did not match local!",1)
 

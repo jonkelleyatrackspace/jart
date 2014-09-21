@@ -1,4 +1,11 @@
 format_version: 1.0
+
+repo_server_settings:
+    product: "example_product"
+    tier: "production"
+    datacenter: "ord"
+    artifact_server: "104.130.162.166"
+
 artifact_servers:
     "example_product":
         production:

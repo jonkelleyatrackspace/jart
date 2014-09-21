@@ -92,7 +92,7 @@ def send_artifact():
     """ Sends an artifact out to the yum server of choice. """
     target_hostname = run('hostname -f')
     display(err.INFO,"------------------------------------------")
-    display(err.INFO,"Starting artifact transfer to host " + target_hostname + " ("+env.host +")")
+    display(err.INFO,"STARTING artifact transfer to host " + target_hostname + " ("+env.host +")")
 
     # Use the `file` command to determine filetype of the file we're handling.
     display(err.INFO,"Attempting to validate if the LOCAL file is a valid rpm.")

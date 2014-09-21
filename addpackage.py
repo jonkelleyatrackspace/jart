@@ -57,7 +57,7 @@ def halt_if_value_empty(variable,name):
 
 def display(err, text):
     """ Prints some informational messages that are preformatted."""
-    print "LOGLINE::::::::::: " + comment_seperator+err+" <> "+text+comment_seperator
+    print "LOGLINE ::::::::::: >>" + err + "<< " + text
 
 # Get parameters.
 var_file        = bash_real_escape_string(os.environ.get('ARTIFACT'))

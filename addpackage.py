@@ -86,8 +86,12 @@ def return_repo_servers():
             sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
             traceback.print_exc(file=sys.stderr)
             sys.exit(253)
+        finally:
+            stream.close()
 
 def return_artifact_servers():
+    stream = open(configfile, 'r')
+    if yaml.load(stream)['format_version'] == "1.0":
         try:
             return yaml.load(stream)['artifactservers'][var_environment]
         except KeyError:
@@ -95,6 +99,8 @@ def return_artifact_servers():
             sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
             traceback.print_exc(file=sys.stderr)
             sys.exit(253)
+        finally:
+            stream.close()
 
 def send_artifact():
     """ Sends a file to the yum server of choice. """
@@ -140,8 +146,8 @@ def send_artifact():
     run('ls -la /srv/repo/')
 
     execution_report("File transfer to <hostname> success!",0)
-print "repos" + return_repo_servers()
-print "artifacts" + return_artifact_servers()
+print "repos" + str(return_repo_servers())
+print "artifacts" + str(return_artifact_servers())
 
 for server in return_artifact_servers():
     execute(send_artifact, hosts=["root@"+server])

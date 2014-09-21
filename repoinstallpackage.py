@@ -104,8 +104,8 @@ halt_if_value_empty(var_file,'artifact')
 halt_if_value_empty(var_environment,'environment')
 halt_if_value_empty(var_datacenter,'datacenter')
 halt_if_value_empty(var_tier,'tier')
-halt_if_value_empty(var_file,'arch')
-halt_if_value_empty(var_file,'release')
+halt_if_value_empty(var_arch,'arch')
+halt_if_value_empty(var_release,'release')
 secure_designator = "unsigned"
 
 """ Checks user to make sure they know what they are talking to """

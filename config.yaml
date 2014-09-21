@@ -1,4 +1,7 @@
 format_version: 1.0
+artifactservers:
+    "example_product":
+        - "104.130.162.166"
 reposervers:
     production:
         ord:

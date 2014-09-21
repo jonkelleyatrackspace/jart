@@ -66,7 +66,7 @@ halt_if_value_empty(var_environment,'environment')
 halt_if_value_empty(var_datacenter,'datacenter')
 halt_if_value_empty(var_tier,'tier')
 
-def locate_server():
+def return_repo_servers():
     """ Locates the server we need to perform operations on. Presents itself as a LIST object.
 
         It expects the following yaml format:
@@ -80,14 +80,23 @@ def locate_server():
     if yaml.load(stream)['format_version'] == "1.0":
         """ 1.0 style syntax """
         try:
-            var_servers = yaml.load(stream)['reposervers'][var_tier][var_datacenter][var_environment]
+            return yaml.load(stream)['reposervers'][var_tier][var_datacenter][var_environment]
         except KeyError:
-            sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing key lookup in yaml file. Look for keyerror in STDERR.\n')
+            sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing REPOSERVER key lookup in yaml file. Look for keyerror in STDERR.\n')
             sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
             traceback.print_exc(file=sys.stderr)
             sys.exit(253)
 
-def sendfile():
+def return_artifact_servers():
+        try:
+            return yaml.load(stream)['artifactservers'][var_environment]
+        except KeyError:
+            sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing ARTIFACTSERVER key lookup in yaml file. Look for keyerror in STDERR.\n')
+            sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
+            traceback.print_exc(file=sys.stderr)
+            sys.exit(253)
+
+def send_artifact():
     """ Sends a file to the yum server of choice. """
     display("Attempting to put file into /srv/repo on file server")
 
@@ -131,6 +140,9 @@ def sendfile():
     run('ls -la /srv/repo/')
 
     execution_report("File transfer to <hostname> success!",0)
-locate_server()
-execute(sendfile, hosts=["root@104.130.162.166"])
+print "repos" + return_repo_servers()
+print "artifacts" + return_artifact_servers()
+
+for server in return_artifact_servers():
+    execute(send_artifact, hosts=["root@"+server])
 

@@ -77,28 +77,26 @@ def return_repo_servers():
                         - "https://10.x.x.x"
      """
     stream = open(configfile, 'r')
-    if yaml.load(stream)['format_version'] == "1.0":
-        """ 1.0 style syntax """
-        try:
-            return yaml.load(stream)['reposervers'][var_tier][var_datacenter][var_environment]
-        except KeyError:
-            sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing REPOSERVER key lookup in yaml file. Look for keyerror in STDERR.\n')
-            sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
-            traceback.print_exc(file=sys.stderr)
-            sys.exit(253)
+    try:
+        return yaml.load(stream)['reposervers'][var_tier][var_datacenter][var_environment]
+    except KeyError:
+        sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing REPOSERVER key lookup in yaml file. Look for keyerror in STDERR.\n')
+        sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(253)
     stream.close()
 
 def return_artifact_servers():
     stream = open(configfile, 'r')
-    if yaml.load(stream)['format_version'] == "1.0":
-        try:
-            return yaml.load(stream)['artifactservers'][var_environment]
-        except KeyError:
-            sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing ARTIFACTSERVER key lookup in yaml file. Look for keyerror in STDERR.\n')
-            sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
-            traceback.print_exc(file=sys.stderr)
-            sys.exit(253)
+    try:
+        return yaml.load(stream)['artifactservers'][var_environment]
+    except KeyError:
+        sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing ARTIFACTSERVER key lookup in yaml file. Look for keyerror in STDERR.\n')
+        sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(253)
     stream.close()
+
 
 def send_artifact():
     """ Sends a file to the yum server of choice. """
@@ -144,8 +142,9 @@ def send_artifact():
     run('ls -la /srv/repo/')
 
     execution_report("File transfer to <hostname> success!",0)
-print "repos" + str(return_repo_servers())
-print "artifacts" + str(return_artifact_servers())
+
+print "repo_servers" + str(return_repo_servers())
+print "artifact_servers" + str(return_artifact_servers())
 
 for server in return_artifact_servers():
     execute(send_artifact, hosts=["root@"+server])

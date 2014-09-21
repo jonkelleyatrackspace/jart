@@ -27,6 +27,13 @@ from fabric.api import local, put, run, settings
 from fabric.tasks import execute
 from pipes import quote as bash_real_escape_string
 
+class err(object):
+    DEBUG = "debug"
+    INFO = "info"
+    WARNING = "warn"
+    WARN = "warn"
+    ERROR = "error"
+
 def execution_report(message="Null",status=0):
     """ Used to handle exit points within the program based on execution status """
     if status >0:
@@ -48,10 +55,10 @@ def halt_if_value_empty(variable,name):
     else:
         if verbose: print "DEBUG:: " + name + "=" + str(variable)
 
-def display(text):
+def display(err, text):
     """ Prints some informational messages that are preformatted."""
     comment_seperator="---------------------->>\n                          "
-    print comment_seperator+text
+    print comment_seperator+err+" :: "+text+comment_seperator
 
 # Get parameters.
 var_file        = bash_real_escape_string(os.environ.get('ARTIFACT'))
@@ -100,45 +107,45 @@ def return_artifact_servers():
 
 def send_artifact():
     """ Sends a file to the yum server of choice. """
-    display("Attempting to put file into /srv/repo on file server")
+    display(err.DEBUG+"Topfile.")
 
     # Use the `file` command to determine filetype of the file we're handling.
-    display("INFO:: Attempting to validate if the LOCAL file is a valid rpm.")
+    display(err.info+"Attempting to validate if the LOCAL file is a valid rpm.")
 
     testfiletype=local('file '+var_file,capture=True)
 
     if "RPM" in testfiletype:
-        display("INFO:: FILE is of type RPM...")
+        display(err.INFO+"FILE is of type RPM...")
     else:
         execution_report("ERROR:: Your package is not an RPM",252)
 
     if "v3.0" in testfiletype:
-        display("INFO:: FILE is of type RPM v3.0...")
+        display(err.INFO+"FILE is of type RPM v3.0...")
     else:
-        execution_report("ERROR:: Your package is not a v3.0 RPM",251)
+        display(err.ERROR+"Your package is not a v3.0 RPM",251)
 
     if "pgp" not in testfiletype:
         if var_signed != "False":
-            display("ERROR:: Your package has no PGP signature.")
+            display(err.ERROR+" Your package has no PGP signature.")
             execution_report("We enforce PGP signed RPMs. Your RPM is not signed!",250)
         else:
-            display("WARN:: Your package has no PGP signature.")
+            display(err.WARN+"Your package has no PGP signature.")
 
     # Now make sure the RPM's md5sum matches inside of the .rpm file using `rpm` command.
-    display("Attempting to validate RPM files md5sum...")
+    display(err.INFO+"Attempting to validate RPM files md5sum...")
     rpmchecksig=local('/bin/rpm --nosignature --checksig '+var_file,capture=True)
     print rpmchecksig
     if "md5 OK" in rpmchecksig:
-        display("FILE md5sum OK...")
+        display(err.INFO+"FILE md5sum OK...")
     else:
         execution_report("File reference fails RPM md5sum check.",249)
 
     # Upload the file
-    display(" Attempting transmit of file to file server.")
+    display(err.INFO+"Attempting transmit of file to file server.")
     put(var_file,'/srv/repo/')
 
     # List remote directory contents
-    display(" Looking at remote file list.")
+    display(err.INFO+"Looking at remote file list.")
     run('ls -la /srv/repo/')
 
     execution_report("File transfer to <hostname> success!",0)
@@ -148,4 +155,3 @@ print "artifact_servers" + str(return_artifact_servers())
 
 for server in return_artifact_servers():
     execute(send_artifact, hosts=["root@"+server])
-

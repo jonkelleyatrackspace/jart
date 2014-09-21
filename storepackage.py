@@ -90,7 +90,9 @@ def return_artifact_servers():
 
 def send_artifact():
     """ Sends an artifact out to the yum server of choice. """
-    display(err.DEBUG,"Topfile.")
+    target_hostname = run('hostname -f')
+    display(err.INFO,"------------------------------------------")
+    display(err.INFO,"Starting artifact transfer to host " + target_hostname + " ("+env.host +")")
 
     # Use the `file` command to determine filetype of the file we're handling.
     display(err.INFO,"Attempting to validate if the LOCAL file is a valid rpm.")
@@ -130,7 +132,8 @@ def send_artifact():
         execution_report("Remote md5sum on artifact server did not match local!",1)
 
     run('echo `hostname -f` received the artifact as scheduled.')
-    print env.host + " received the artifact as scheduled"
+    display(err.INFO," FINISHED artifact transfer to host  " + target_hostname + " ("+env.host +")")
+    display(err.INFO,"------------------------------------------")
 
 servers = return_artifact_servers()
 for server in servers:

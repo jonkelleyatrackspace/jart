@@ -129,7 +129,8 @@ def send_artifact():
     if remotefilemd5 != testfilemd5:
         execution_report("Remote md5sum on artifact server did not match local!",1)
 
-    run('echo Artifact server updated.')
+    run('echo `hostname -f` received the artifact as scheduled.')
+    print env.host + " received the artifact as scheduled"
 
 servers = return_artifact_servers()
 for server in servers:

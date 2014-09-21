@@ -15,17 +15,16 @@
 # lock: False
 # -- jojo -- 
 
+verbose=True
 
 # This script in a nutshell
 # 1) Takes a local RPM and validates it is acceptable to upload.
 # 2) Uploads the .rpm to the RECIEVING directory account on yum repo of choice.
 
-verbose=True
-
 import sys, os, yaml, traceback
 from fabric.api import local, put, run, settings
 from fabric.tasks import execute
-from pipes import quote # Escapes bash control chars.
+from pipes import quote as bash_real_escape_string
 
 def execution_report(message="Null",status=0):
     """ Used to handle exit points within the program based on execution status """
@@ -53,15 +52,22 @@ def display(text):
     comment_seperator="---------------------->>\n                          "
     print comment_seperator+text
 
-var_file = quote(os.environ.get('ARTIFACT'));           halt_if_value_empty(var_file,'artifact')
-var_environment = quote(os.environ.get('ENVIRONMENT')); halt_if_value_empty(var_environment,'environment')
-var_datacenter = quote(os.environ.get('DATACENTER'));   halt_if_value_empty(var_datacenter,'datacenter')
-var_tier = quote(os.environ.get('TIER'));               halt_if_value_empty(var_tier,'tier')
+# Get parameters.
+var_file        = bash_real_escape_string(os.environ.get('ARTIFACT'))
+var_environment = bash_real_escape_string(os.environ.get('ENVIRONMENT'))
+var_datacenter  = bash_real_escape_string(os.environ.get('DATACENTER'))
+var_tier        = bash_real_escape_string(os.environ.get('TIER'))
 
-var_signed = quote(os.environ.get('SIGNED'))
+var_signed      = bash_real_escape_string(os.environ.get('SIGNED'))
+# Don't let script continue without these parameters.
+halt_if_value_empty(var_file,'artifact')
+halt_if_value_empty(var_environment,'environment')
+halt_if_value_empty(var_datacenter,'datacenter')
+halt_if_value_empty(var_tier,'tier')
 
 def locate_server():
-    """ Locates the server we need to perform operations on. It looks in CWD for a reposervers.yml file.
+    """ Locates the server we need to perform operations on. Presents itself as a LIST object.
+
         It expects the following yaml format:
         reposervers:
             production:
@@ -70,14 +76,15 @@ def locate_server():
                         - "https://10.x.x.x"
      """
     stream = open("/srv/scripts/config.yaml", 'r')
-    try:
-        print yaml.load(stream)['reposervers'][var_tier][var_datacenter][var_environment]
-    except KeyError:
-        sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing key lookup in yaml file. Look for keyerror in STDERR.\n')
-        sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
-        traceback.print_exc(file=sys.stderr)
-        sys.exit(253)
-
+    if yaml.load(stream)['format_version'] == "1.0":
+        """ 1.0 style syntax """
+        try:
+            var_servers = yaml.load(stream)['reposervers'][var_tier][var_datacenter][var_environment]
+        except KeyError:
+            sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing key lookup in yaml file. Look for keyerror in STDERR.\n')
+            sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
+            traceback.print_exc(file=sys.stderr)
+            sys.exit(253)
 
 def sendfile():
     """ Sends a file to the yum server of choice. """

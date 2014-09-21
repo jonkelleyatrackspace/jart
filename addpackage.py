@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# curl -XPOST -H "Content-Type: application/json" -d '{"tier":"production","datacenter": "ord", "environment" : "example_netwrk", "signed" : "False", "artifact": "/epel-release-5-4.noarch.rpm"}'  'http://localhost:9090/scripts/example' | python -m json.tool
 
 
 # -- jojo --
@@ -17,6 +16,7 @@
 
 verbose=True
 
+# curl -XPOST -H "Content-Type: application/json" -d '{"tier":"production","datacenter": "ord", "environment" : "example_netwrk", "signed" : "False", "artifact": "/epel-release-5-4.noarch.rpm"}'  'http://localhost:9090/scripts/example' | python -m json.tool
 # This script in a nutshell
 # 1) Takes a local RPM and validates it is acceptable to upload.
 # 2) Uploads the .rpm to the RECIEVING directory account on yum repo of choice.

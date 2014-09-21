@@ -1,52 +1,86 @@
 #!/usr/bin/python
+# curl -XPOST -H "Content-Type: application/json" -d '{"tier":"production","datacenter": "ord", "environment" : "example_netwrk", "signed" : "False", "artifact": "/epel-release-5-4.noarch.rpm"}'  'http://localhost:9090/scripts/example' | python -m json.tool
 
-#  Add a package curl -XPOST -H "Content-Type: application/json" -d '{"signed" : "False", "file": "/epel-release-5-4.noarch.rpm"}'  'http://localhost:9090/scripts/example' | python -m json.tool
 
-# Reload jojo server    curl -XPOST  'http://localhost:9090/reload' -v
 # -- jojo --
-# description: Upload a file with fabric
-# param: file  - File you wish to upload
-# param: arch - What type of architecture, x86, x86_64, noarch
-# param: release - What release, el6, el7, etc....
-# param: environment - The environment or service stack, i.e. signup, identity
-# param: datacenter - The datacenter if relevant
-# param: tier - Dev, staging, prod, etc.
-# param: signed - Put false if you do not want to verify package signing.
+# description: The purpose of this script is to take a local RPM artifact and drop it on to the yum repository of choice.
+# param: artifact  - The RPM artifact you wish to include [myfile.rpm]. (REQUIRED)
+# param: arch - The architecture you wish to put this file in [x86_64,noarch,x86] (REQUIRED)
+# param: release - What Redhat release to put this file in [5,6,7] (REQUIRED)
+# param: environment - What environment do you want to put this in [signup,atomhopper,shared] (REQUIRED)
+# param: datacenter - The datacenter to contact [ord,dfw,all] (REQUIRED)
+# param: tier - The tier of service to contact [dev,staging,test,prod,stable] (REQUIRED)
+# param: signed - Override the requirement for package signing and upload an unsigned package.
 # http_method: post
 # lock: False
 # -- jojo -- 
 
+
+# This script in a nutshell
+# 1) Takes a local RPM and validates it is acceptable to upload.
+# 2) Uploads the .rpm to the RECIEVING directory account on yum repo of choice.
+
 verbose=True
 
-import sys
-import os
-import yaml
+import sys, os, yaml, traceback
 from fabric.api import local, put, run, settings
 from fabric.tasks import execute
-
-var_file = os.environ.get('FILE',None)
-var_environment = os.environ.get('ENVIRONMENT',None)
-var_datacenter = os.environ.get('DATACENTER',None)
-var_tier = os.environ.get('TIER',None)
-var_signed = os.environ.get('SIGNED','True')
+from pipes import quote # Escapes bash control chars.
 
 def execution_report(message="Null",status=0):
+    """ Used to handle exit points within the program based on execution status """
     if status >0:
-        print "jojo_return_value" + "message="+message
+        print "jojo_return_value" + "execution_message="+message
         print "jojo_return_value" + "execution_success=False"
         sys.exit(status)
     else:
-        print "jojo_return_value" + "message="+message
+        print "jojo_return_value" + "execution_message="+message
         print "jojo_return_value" + "execution_success=True"
         sys.exit(0)
+
+def halt_if_value_empty(variable,name):
+    """ Have this script bail if missing POST values. """
+    if variable == "":
+        sys.stdout.write('jojo_return_value ERROR_MESSAGE=Undefined key `'+name+'` in JSON POST request (required) \n')
+        sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
+        sys.stdout.write('jojo_return_value ERROR_META_MISSING_KEY='+name+'\n')
+        sys.exit(1)
+    else:
+        if verbose: print "DEBUG:: " + name + "=" + str(variable)
 
 def display(text):
     """ Prints some informational messages that are preformatted."""
     comment_seperator="---------------------->>\n                          "
     print comment_seperator+text
 
-def upload_rpm():
-    """ Checks a file to see if it is a valid RPM and if it is, uploads it."""
+var_file = quote(os.environ.get('ARTIFACT'));           halt_if_value_empty(var_file,'artifact')
+var_environment = quote(os.environ.get('ENVIRONMENT')); halt_if_value_empty(var_environment,'environment')
+var_datacenter = quote(os.environ.get('DATACENTER'));   halt_if_value_empty(var_datacenter,'datacenter')
+var_tier = quote(os.environ.get('TIER'));               halt_if_value_empty(var_tier,'tier')
+
+var_signed = quote(os.environ.get('SIGNED'))
+
+def locate_server():
+    """ Locates the server we need to perform operations on. It looks in CWD for a reposervers.yml file.
+        It expects the following yaml format:
+        reposervers:
+            production:
+                ord:
+                    "cloud_signup":
+                        - "https://10.x.x.x"
+     """
+    stream = open("/srv/scripts/config.yaml", 'r')
+    try:
+        print yaml.load(stream)['reposervers'][var_tier][var_datacenter][var_environment]
+    except KeyError:
+        sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing key lookup in yaml file. Look for keyerror in STDERR.\n')
+        sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
+        traceback.print_exc(file=sys.stderr)
+        sys.exit(1)
+
+
+def sendfile():
+    """ Sends a file to the yum server of choice. """
     display("Attempting to put file into /srv/repo on file server")
 
     # Use the `file` command to determine filetype of the file we're handling.
@@ -70,6 +104,7 @@ def upload_rpm():
             execution_report("We enforce PGP signed RPMs. Your RPM is not signed!",1)
         else:
             display("WARN:: Your package has no PGP signature.")
+
     # Now make sure the RPM's md5sum matches inside of the .rpm file using `rpm` command.
     display("Attempting to validate RPM files md5sum...")
     rpmchecksig=local('/bin/rpm --nosignature --checksig '+var_file,capture=True)
@@ -79,7 +114,6 @@ def upload_rpm():
     else:
         execution_report("File reference fails RPM md5sum check.",1)
 
-
     # Upload the file
     display(" Attempting transmit of file to file server.")
     put(var_file,'/srv/repo/')
@@ -88,7 +122,7 @@ def upload_rpm():
     display(" Looking at remote file list.")
     run('ls -la /srv/repo/')
 
-execute(upload_rpm, hosts=["root@104.130.162.166"])
-
-execution_report("File upload success!",0)
+    execution_report("File transfer to <hostname> success!",0)
+locate_server()
+execute(sendfile, hosts=["root@104.130.162.166"])
 

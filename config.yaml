@@ -1,0 +1,6 @@
+format_version: 1.0
+reposervers:
+    production:
+        ord:
+            "example_product":
+                - "http://104.130.162.166"

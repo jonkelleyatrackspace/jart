@@ -44,7 +44,7 @@ def halt_if_value_empty(variable,name):
         sys.stdout.write('jojo_return_value ERROR_MESSAGE=Undefined key `'+name+'` in JSON POST request (required) \n')
         sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
         sys.stdout.write('jojo_return_value ERROR_META_MISSING_KEY='+name+'\n')
-        sys.exit(1)
+        sys.exit(254)
     else:
         if verbose: print "DEBUG:: " + name + "=" + str(variable)
 
@@ -76,7 +76,7 @@ def locate_server():
         sys.stdout.write('jojo_return_value ERROR_MESSAGE=Missing key lookup in yaml file. Look for keyerror in STDERR.\n')
         sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
         traceback.print_exc(file=sys.stderr)
-        sys.exit(1)
+        sys.exit(253)
 
 
 def sendfile():
@@ -91,17 +91,17 @@ def sendfile():
     if "RPM" in testfiletype:
         display("INFO:: FILE is of type RPM...")
     else:
-        execution_report("ERROR:: Your package is not an RPM",1)
+        execution_report("ERROR:: Your package is not an RPM",252)
 
     if "v3.0" in testfiletype:
         display("INFO:: FILE is of type RPM v3.0...")
     else:
-        execution_report("ERROR:: Your package is not a v3.0 RPM",1)
+        execution_report("ERROR:: Your package is not a v3.0 RPM",251)
 
     if "pgp" not in testfiletype:
         if var_signed != "False":
             display("ERROR:: Your package has no PGP signature.")
-            execution_report("We enforce PGP signed RPMs. Your RPM is not signed!",1)
+            execution_report("We enforce PGP signed RPMs. Your RPM is not signed!",250)
         else:
             display("WARN:: Your package has no PGP signature.")
 
@@ -112,7 +112,7 @@ def sendfile():
     if "md5 OK" in rpmchecksig:
         display("FILE md5sum OK...")
     else:
-        execution_report("File reference fails RPM md5sum check.",1)
+        execution_report("File reference fails RPM md5sum check.",249)
 
     # Upload the file
     display(" Attempting transmit of file to file server.")

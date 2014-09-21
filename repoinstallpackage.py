@@ -57,7 +57,7 @@ def execution_report(message="Null",status=0):
 
 def halt_if_value_empty(variable,name):
     """ Have this script bail if missing POST values. """
-    if variable == "":
+    if variable == "" or variable == """''""":
         sys.stdout.write('jojo_return_value ERROR_MESSAGE=Undefined key `'+name+'` in JSON POST request (required) \n')
         sys.stdout.write('jojo_return_value JOB_STATUS=fail\n')
         sys.stdout.write('jojo_return_value ERROR_META_MISSING_KEY='+name+'\n')

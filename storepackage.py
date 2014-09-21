@@ -38,6 +38,14 @@ class err(object):
     WARN = "warn"
     ERROR = "error"
 
+class bcolors(object):
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+
 def execution_report(message="Null",status=0):
     """ Used to handle exit points within the program based on execution status """
     if status >0:
@@ -61,7 +69,7 @@ def halt_if_value_empty(variable,name):
 
 def display(err, text):
     """ Prints some informational messages that are preformatted."""
-    print "LOGLINE ::::::::::: \n     >>" + err + "<< " + text
+    print bcolors.OKBLUE+">>" + err + "<< " + text + bcolors.ENDC
 
 # Get parameters.
 var_file        = bash_real_escape_string(os.environ.get('ARTIFACT'))
